@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+
+# Editor
+*~
+.vscode/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node.js
+node_modules/
+
+# Compiled binaries
+*.o
+*.out
+*.exe
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+.idea_modules/
+*.code-workspace
+.idea_codeStyles/
+*.editorconfig
