@@ -45,7 +45,7 @@ fi
 clone_with_progress() {
     if [ -d "$2" ]; then
         print_msg "$2 already exists. Updating..."
-        (cd "$2" && git pull origin master)
+        (cd "$2" && git pull origin main || git pull origin master)
     else
         git clone --progress "$1" "$2" 2>&1 | pv -lep -s $(git ls-remote --tags --heads "$1" | wc -l)
     fi
