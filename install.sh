@@ -28,9 +28,9 @@ else
 fi
 
 # Ensure Homebrew is in the PATH
-brew_bin="/usr/local/bin/brew"
+brew_bin="/opt/homebrew/bin/brew"
 if [[ -x "$brew_bin" ]]; then
-    export PATH="$brew_bin:$PATH"
+    # export PATH="$brew_bin:$PATH"
 
     # Check if pv is installed
     if ! command -v pv &> /dev/null; then
