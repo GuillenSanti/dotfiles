@@ -1,0 +1,5 @@
+# ===================================
+# PATH Configuration
+# ===================================
+export PATH="$HOME/.asdf/shims:$HOME/.asdf/bin:$PATH"
+  . /usr/local/opt/asdf/libexec/asdf.sh

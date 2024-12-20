@@ -11,35 +11,17 @@ print_msg() {
     echo -e "${green}[INFO]${nc} $1"
 }
 
-# Function to install pv using Homebrew
-install_pv() {
-    print_msg "Installing pv..."
-    brew install pv
-}
-
-# Check if Homebrew is installed
-if command -v brew &> /dev/null; then
-    print_msg "Homebrew is already installed. Updating..."
-    brew update
-else
-    print_msg "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    print_msg "Homebrew installed successfully."
-fi
-
-# Ensure Homebrew is in the PATH
-brew_bin="/opt/homebrew/bin/brew"
-if [[ -x "$brew_bin" ]]; then
-    # export PATH="$brew_bin:$PATH"
-
-    # Check if pv is installed
-    if ! command -v pv &> /dev/null; then
-        install_pv
+# Function to install or update a Homebrew package
+install_or_update_brew_package() {
+    package=$1
+    if ! brew list "$package" &>/dev/null; then
+        print_msg "Installing $package..."
+        brew install "$package" || { echo "Error installing $package"; exit 1; }
+    else
+        print_msg "$package is already installed. Updating..."
+        brew upgrade "$package" || { echo "Error upgrading $package"; exit 1; }
     fi
-else
-    echo "Homebrew binary not found. Please check the installation."
-    exit 1
-fi
+}
 
 # Function to show progress of cloning using pv
 clone_with_progress() {
@@ -50,6 +32,40 @@ clone_with_progress() {
         git clone --progress "$1" "$2" 2>&1 | pv -lep -s $(git ls-remote --tags --heads "$1" | wc -l)
     fi
 }
+
+# Function to create zshrc.local if it doesn't exist
+create_local_zshrc() {
+    local local_zshrc="$HOME/.zshrc.local"
+    if [ ! -f "$local_zshrc" ]; then
+        print_msg "Creating $local_zshrc for machine-specific configurations..."
+        touch "$local_zshrc"
+
+        # Add default settings or example configurations here
+        echo "# Custom machine-specific configurations" > "$local_zshrc"
+        echo "# Example: export PATH=\$PATH:/some/custom/path" >> "$local_zshrc"
+        echo "# Example: alias gs='git status'" >> "$local_zshrc"
+
+        print_msg "$local_zshrc created successfully."
+    else
+        print_msg "$local_zshrc already exists."
+    fi
+}
+
+# Check if Homebrew is installed, if not, install it
+if ! command -v brew &> /dev/null; then
+    print_msg "Homebrew not found. Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || { echo "Error installing Homebrew"; exit 1; }
+    print_msg "Homebrew installed successfully."
+else
+    print_msg "Homebrew is already installed. Updating..."
+    brew update || { echo "Error updating Homebrew"; exit 1; }
+fi
+
+# Install or update essential packages using Homebrew
+install_or_update_brew_package "fzf"
+install_or_update_brew_package "asdf"
+install_or_update_brew_package "direnv"
+install_or_update_brew_package "pv"
 
 # Check and update Oh My Zsh
 if [ -d "$HOME/.oh-my-zsh" ]; then
@@ -70,30 +86,47 @@ clone_with_progress https://github.com/zsh-users/zsh-syntax-highlighting.git ${Z
 # zsh-fzf-history-search
 clone_with_progress https://github.com/joshskidmore/zsh-fzf-history-search ${ZSH_CUSTOM:=~/.oh-my-zsh/custom}/plugins/zsh-fzf-history-search
 
-# Install or update fzf using Homebrew
-if ! brew list fzf &>/dev/null; then
-    print_msg "Installing fzf..."
-    brew install fzf
-else
-    print_msg "fzf is already installed. Updating..."
-    brew upgrade fzf
+# Remove existing symbolic links
+print_msg "Removing existing symbolic links..."
+rm -f "$HOME/.zshrc" "$HOME/.vimrc" "$ZSH/themes/santi.zsh-theme" "$HOME/.gitignore_global"
+
+# Ensure the ZSH themes directory exists
+if [ ! -d "$ZSH/themes" ]; then
+    echo "Error: $ZSH/themes directory not found."
+    exit 1
 fi
 
 # Specify the dotfiles directory
 dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Remove existing symbolic links
-print_msg "Removing existing symbolic links..."
-rm -f "$HOME/.zshrc" "$HOME/.vimrc" "$ZSH/themes/santi.zsh-theme" "$HOME/.gitignore_global"
+# Create new symbolic links if they don't already exist
+create_symlink() {
+    if [ ! -L "$2" ]; then
+        print_msg "Creating symlink for $1..."
+        ln -s "$1" "$2" || { echo "Error creating symlink for $2"; exit 1; }
+    else
+        print_msg "Symlink for $2 already exists."
+    fi
+}
 
-# Create new symbolic links
-print_msg "Creating new symbolic links for your configuration."
-ln -s "$dotfiles_dir/.zshrc" "$HOME/.zshrc"
-ln -s "$dotfiles_dir/.vimrc" "$HOME/.vimrc"
-ln -s "$dotfiles_dir/santi.zsh-theme" "$ZSH/themes/santi.zsh-theme"
-ln -s "$dotfiles_dir/.gitignore_global" "$HOME/.gitignore_global"
+create_symlink "$dotfiles_dir/.zshrc" "$HOME/.zshrc"
+create_symlink "$dotfiles_dir/.vimrc" "$HOME/.vimrc"
+create_symlink "$dotfiles_dir/santi.zsh-theme" "$ZSH/themes/santi.zsh-theme"
+create_symlink "$dotfiles_dir/.gitignore_global" "$HOME/.gitignore_global"
+
 print_msg "Symbolic links created successfully."
 
 # Ensure that the files have been created correctly
 ls -la "$HOME/.zshrc" "$HOME/.vimrc"
 
+# After ensuring Homebrew and packages are installed, call the function to create ~/.zshrc.local
+create_local_zshrc
+
+# Execute the update-hosts.sh script
+print_msg "Executing update-hosts.sh script..."
+if [ -f "$dotfiles_dir/update-hosts.sh" ]; then
+    bash "$dotfiles_dir/update-hosts.sh" || { echo "Error executing update-hosts.sh"; exit 1; }
+else
+    echo "Error: update-hosts.sh not found."
+    exit 1
+fi
