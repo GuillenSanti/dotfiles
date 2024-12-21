@@ -11,7 +11,7 @@ To get started with these dotfiles, follow these steps:
     First, clone this repository to your machine:
 
     ```bash
-    git clone https://github.com/yourusername/dotfiles.git ~/dotfiles
+    git clone https://github.com/GuillenSanti/dotfiles.git ~/dotfiles
     cd ~/dotfiles
     ```
 
@@ -34,20 +34,28 @@ To get started with these dotfiles, follow these steps:
       - `~/.gitignore_global` (Global Git ignore file)
       - Custom Zsh theme `~/.oh-my-zsh/themes/santi.zsh-theme`
     - Create the `~/.zshrc.local` file (if not already created) for machine-specific configurations.
+    - Create the `~/.hosts.local` file (if not already created) for machine-specific hosts configurations.
     - Execute the `update-hosts.sh` script to update your hosts file.
 
-3. **Configure `~/.zshrc.local` (optional)**:
+3. **Configure `~/.zshrc.local` and `~/.hosts.local` (optional)**:
 
-    If you have machine-specific configurations (like environment variables, aliases, or other settings), you can add them to the `~/.zshrc.local` file. This file is sourced at the end of your main `~/.zshrc` file.
+    If you have machine-specific configurations (like environment variables, aliases, or other settings), you can add them to the `~/.zshrc.local` and `~/.hosts.local` files. These files are sourced at the end of your main `~/.zshrc` file.
 
-    - Add any custom settings or exports in `~/.zshrc.local` , for example:
+    - Add any custom settings or exports in `~/.zshrc.local`, for example:
 
       ```bash
       export PATH="$PATH:/some/custom/path"
       alias gs="git status"
       ```
 
-    The `~/.zshrc.local` file will be automatically loaded by your main `~/.zshrc`.
+    - For `~/.hosts.local`, you can add custom host entries:
+
+      ```bash
+      127.0.0.1   my-custom-host.local
+      192.168.1.100 another-host.local
+      ```
+
+    The `~/.zshrc.local` file will be automatically loaded by your main `~/.zshrc`, and the `~/.hosts.local` file will be included in the `/etc/hosts` configuration.
 
 ## Zsh Plugins
 
@@ -67,8 +75,9 @@ You can customize the following files:
 - **~/.vimrc**: Vim configuration file.
 - **~/.gitignore_global**: A global Git ignore file for excluding files from version control.
 - **~/.zshrc.local**: A file for machine-specific configurations (e.g., environment variables or aliases).
+- **~/.hosts.local**: A file for machine-specific host configurations (e.g., IP-to-hostname mappings).
 
-If you're using multiple systems (work, personal, etc.), the `~/.zshrc.local` file allows you to specify custom settings for each machine.
+If you're using multiple systems (work, personal, etc.), the `~/.zshrc.local` and `~/.hosts.local` files allow you to specify custom settings for each machine.
 
 ## Managing Updates
 

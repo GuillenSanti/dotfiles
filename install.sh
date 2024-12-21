@@ -33,21 +33,29 @@ clone_with_progress() {
     fi
 }
 
-# Function to create zshrc.local if it doesn't exist
-create_local_zshrc() {
-    local local_zshrc="$HOME/.zshrc.local"
-    if [ ! -f "$local_zshrc" ]; then
-        print_msg "Creating $local_zshrc for machine-specific configurations..."
-        touch "$local_zshrc"
+# Function to create a file if it doesn't exist
+create_local_file() {
+    local file_path="$1"
+    local description="$2"
 
-        # Add default settings or example configurations here
-        echo "# Custom machine-specific configurations" > "$local_zshrc"
-        echo "# Example: export PATH=\$PATH:/some/custom/path" >> "$local_zshrc"
-        echo "# Example: alias gs='git status'" >> "$local_zshrc"
+    if [ ! -f "$file_path" ]; then
+        print_msg "Creating $file_path for $description..."
+        touch "$file_path"
 
-        print_msg "$local_zshrc created successfully."
+        # Add default or example content if required
+        if [[ "$file_path" == *"zshrc.local" ]]; then
+            echo "# Custom machine-specific configurations" > "$file_path"
+            echo "# Example: export PATH=\$PATH:/some/custom/path" >> "$file_path"
+            echo "# Example: alias gs='git status'" >> "$file_path"
+        elif [[ "$file_path" == *"hosts.local" ]]; then
+            echo "# Custom machine-specific hosts configurations" > "$file_path"
+            echo "# Example: 127.0.0.1   my-custom-host.local" >> "$file_path"
+            echo "# Example: 192.168.1.100 another-host.local" >> "$file_path"
+        fi
+
+        print_msg "$file_path created successfully."
     else
-        print_msg "$local_zshrc already exists."
+        print_msg "$file_path already exists."
     fi
 }
 
@@ -88,7 +96,10 @@ clone_with_progress https://github.com/joshskidmore/zsh-fzf-history-search ${ZSH
 
 # Remove existing symbolic links
 print_msg "Removing existing symbolic links..."
-rm -f "$HOME/.zshrc" "$HOME/.vimrc" "$ZSH/themes/santi.zsh-theme" "$HOME/.gitignore_global"
+rm -f "$HOME/.zshrc" "$HOME/.vimrc" "$ZSH/themes/santi.zsh-theme" "$HOME/.gitignore_global" "$HOME/.zshrc.local" "$HOME/.hosts.local"
+
+# Specify the dotfiles directory
+dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Ensure the ZSH themes directory exists
 if [ ! -d "$ZSH/themes" ]; then
@@ -96,10 +107,7 @@ if [ ! -d "$ZSH/themes" ]; then
     exit 1
 fi
 
-# Specify the dotfiles directory
-dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Create new symbolic links if they don't already exist
+# Create new symbolic links
 create_symlink() {
     if [ ! -L "$2" ]; then
         print_msg "Creating symlink for $1..."
@@ -109,18 +117,21 @@ create_symlink() {
     fi
 }
 
+# Create local configuration files in the root of dotfiles
+create_local_file "$dotfiles_dir/.zshrc.local" "machine-specific Zsh configurations"
+create_local_file "$dotfiles_dir/hosts.local" "machine-specific hosts configurations"
+
+# Create symbolic links for the local files in the home directory
+create_symlink "$dotfiles_dir/.zshrc.local" "$HOME/.zshrc.local"
+create_symlink "$dotfiles_dir/hosts.local" "$HOME/.hosts.local"
+
+# Create other symbolic links
 create_symlink "$dotfiles_dir/.zshrc" "$HOME/.zshrc"
 create_symlink "$dotfiles_dir/.vimrc" "$HOME/.vimrc"
 create_symlink "$dotfiles_dir/santi.zsh-theme" "$ZSH/themes/santi.zsh-theme"
 create_symlink "$dotfiles_dir/.gitignore_global" "$HOME/.gitignore_global"
 
 print_msg "Symbolic links created successfully."
-
-# Ensure that the files have been created correctly
-ls -la "$HOME/.zshrc" "$HOME/.vimrc"
-
-# After ensuring Homebrew and packages are installed, call the function to create ~/.zshrc.local
-create_local_zshrc
 
 # Execute the update-hosts.sh script
 print_msg "Executing update-hosts.sh script..."
