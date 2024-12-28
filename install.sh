@@ -14,22 +14,106 @@ print_msg() {
 # Function to install or update a Homebrew package
 install_or_update_brew_package() {
     package=$1
-    if ! brew list "$package" &>/dev/null; then
-        print_msg "Installing $package..."
-        brew install "$package" || { echo "Error installing $package"; exit 1; }
+
+    # Check if the package is already installed manually (i.e., outside of Homebrew)
+    if command -v "$package" &>/dev/null; then
+        # Get the path where the package is installed
+        package_path=$(which "$package")
+
+        # Check if the package is managed by Homebrew (its path should be inside Homebrew's installation directory)
+        if [[ "$package_path" == /opt/homebrew/bin/* || "$package_path" == /usr/local/bin/* ]]; then
+            print_msg "$package is already installed and managed by Homebrew. Updating..."
+            brew upgrade "$package" || { echo "Error upgrading $package"; return 0; }
+            return 0
+        else
+            print_msg "$package is already installed manually at $package_path. Skipping Homebrew installation."
+            return 0
+        fi
+    fi
+
+    # Check if a related app exists in /Applications (for GUI apps)
+    apps_in_applications=()
+    while IFS= read -r app; do
+        apps_in_applications+=("$app")
+    done < <(find /Applications -iname "*.app" -maxdepth 1)
+
+    # Normalize the package name (lowercase and no spaces) for comparison
+    normalized_package_name=$(echo "$package" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+
+    for app in "${apps_in_applications[@]}"; do
+        normalized_app_name=$(echo "$(basename "$app" .app)" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+
+        if [[ "$normalized_app_name" == "$normalized_package_name" ]]; then
+            print_msg "$package is already installed manually as $app. Skipping Homebrew installation."
+            return 0
+        fi
+    done
+
+    # If the package is not found, install it via Homebrew
+    print_msg "Installing $package..."
+    brew install "$package" || { echo "Error installing $package"; return 0; }
+}
+
+# Function to install or update a Homebrew cask package
+install_or_update_brew_cask_package() {
+    cask_package=$1
+    print_msg "Installing $cask_package..."
+    
+    # Normalize the cask package name by converting it to lowercase and removing spaces
+    normalized_cask_package=$(echo "$cask_package" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+    
+    # Get all the app names from /Applications, normalize them (lowercase and no spaces)
+    # Using a loop to process the output of find line by line
+    apps_in_applications=()
+    while IFS= read -r app; do
+        apps_in_applications+=("$app")
+    done < <(find /Applications -iname "*.app" -maxdepth 1)
+
+    # Check if the normalized app name already exists in /Applications
+    for app in "${apps_in_applications[@]}"; do
+        # Normalize each app name (remove spaces and convert to lowercase)
+        normalized_app_name=$(echo "$(basename "$app" .app)" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+
+        # If the normalized app name matches the desired cask_package, skip installation
+        if [[ "$normalized_app_name" == "$normalized_cask_package" ]]; then
+            print_msg "$cask_package is already installed manually at $app. Skipping Homebrew installation."
+            return 0
+        fi
+    done
+
+    # If the app is not found, proceed with installation or update
+    if ! brew list --cask "$cask_package" &>/dev/null; then
+        print_msg "Installing $cask_package..."
+        brew install --cask "$cask_package" || { echo "Error installing $cask_package"; return 0; }
     else
-        print_msg "$package is already installed. Updating..."
-        brew upgrade "$package" || { echo "Error upgrading $package"; exit 1; }
+        print_msg "$cask_package is already installed via Homebrew. Updating..."
+        brew upgrade --cask "$cask_package" || { echo "Error upgrading $cask_package"; return 0; }
     fi
 }
 
 # Function to show progress of cloning using pv
 clone_with_progress() {
-    if [ -d "$2" ]; then
-        print_msg "$2 already exists. Updating..."
-        (cd "$2" && git pull origin main || git pull origin master)
+    local repo_url="$1"
+    local dest_dir="$2"
+
+    if [ -d "$dest_dir" ]; then
+        print_msg "$dest_dir already exists. Updating..."
+
+        # Detect the default branch of the remote repository
+        local default_branch=$(git -C "$dest_dir" remote show origin | awk '/HEAD branch/ {print $NF}')
+        if [ -z "$default_branch" ]; then
+            print_msg "Default branch not detected. Using 'master' as fallback."
+            default_branch="master"
+        fi
+
+        # Pull updates from the detected branch
+        (cd "$dest_dir" && git pull origin "$default_branch") || {
+            echo "Error pulling updates for $dest_dir"; 
+            return 1;
+        }
     else
-        git clone --progress "$1" "$2" 2>&1 | pv -lep -s $(git ls-remote --tags --heads "$1" | wc -l)
+        # Clone the repository with progress shown via pv
+        git clone --progress "$repo_url" "$dest_dir" 2>&1 | pv -lep -s $(git ls-remote --tags --heads "$repo_url" | wc -l)
     fi
 }
 
@@ -59,6 +143,18 @@ create_local_file() {
     fi
 }
 
+# Ensure the Sites directory exists
+ensure_sites_directory() {
+    local sites_dir="$HOME/Sites"
+
+    if [ ! -d "$sites_dir" ]; then
+        print_msg "Creating Sites directory in home..."
+        mkdir -p "$sites_dir" || { echo "Error creating Sites directory"; exit 1; }
+    else
+        print_msg "Sites directory already exists."
+    fi
+}
+
 # Check if Homebrew is installed, if not, install it
 if ! command -v brew &> /dev/null; then
     print_msg "Homebrew not found. Installing Homebrew..."
@@ -69,11 +165,14 @@ else
     brew update || { echo "Error updating Homebrew"; exit 1; }
 fi
 
-# Install or update essential packages using Homebrew
+# Install or update packages using Homebrew
 install_or_update_brew_package "fzf"
 install_or_update_brew_package "asdf"
 install_or_update_brew_package "direnv"
 install_or_update_brew_package "pv"
+install_or_update_brew_package "tmux"
+install_or_update_brew_package "meetingbar"
+install_or_update_brew_cask_package "rectangle"
 
 # Check and update Oh My Zsh
 if [ -d "$HOME/.oh-my-zsh" ]; then
@@ -141,3 +240,5 @@ else
     echo "Error: update-hosts.sh not found."
     exit 1
 fi
+
+ensure_sites_directory

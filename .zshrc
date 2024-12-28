@@ -26,10 +26,6 @@ alias gb-no-remote='git fetch --prune && git branch -vv | grep ": gone]" | awk "
 alias gbD-no-remote='git fetch --prune && git branch -vv | grep ": gone]" | awk "{print \$1}" | xargs -r git branch -D'
 alias glf="git log --stat --pretty=format:'%C(yellow)%h%Creset - %s %Cgreen(%cr)%Creset %C(bold blue)<%an>%Creset'"
 
-# Programmer
-# alias code='cd ~/Sites'  # Change this based on your projects directory
-alias h='history'
-
 # Useful Functions
 mkcd() {
   if [ -d "$1" ]; then

@@ -28,6 +28,8 @@ To get started with these dotfiles, follow these steps:
     - Install or update essential packages via Homebrew (e.g., `fzf`, `asdf`, `direnv`, `pv`, etc.).
     - Install **Oh My Zsh** if it's not already installed.
     - Install and configure Zsh plugins such as `zsh-autosuggestions`, `zsh-syntax-highlighting`, and `zsh-fzf-history-search`.
+    - Install **MeetingBar** for window management.
+    - Install **Rectangle** for window management.
     - Set up symbolic links for the following files:
       - `~/.zshrc` (Zsh configuration)
       - `~/.vimrc` (Vim configuration)
@@ -56,6 +58,10 @@ To get started with these dotfiles, follow these steps:
       ```
 
     The `~/.zshrc.local` file will be automatically loaded by your main `~/.zshrc`, and the `~/.hosts.local` file will be included in the `/etc/hosts` configuration.
+
+4. **Configure Rectangle settings**:
+
+    If you're using the **Rectangle** app for window management, you can import the provided `RectangleConfig.json` file into the app to use the predefined settings.
 
 ## Zsh Plugins
 
