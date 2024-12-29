@@ -3,7 +3,7 @@
 # ===================================
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="santi"
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting )
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting dotenv extract sudo docker docker-compose)
 source $ZSH/oh-my-zsh.sh
 
 # ===================================

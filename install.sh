@@ -195,14 +195,14 @@ clone_with_progress https://github.com/joshskidmore/zsh-fzf-history-search ${ZSH
 
 # Remove existing symbolic links
 print_msg "Removing existing symbolic links..."
-rm -f "$HOME/.zshrc" "$HOME/.vimrc" "$ZSH/themes/santi.zsh-theme" "$HOME/.gitignore_global" "$HOME/.zshrc.local" "$HOME/.hosts.local"
+rm -f "$HOME/.zshrc" "$HOME/.vimrc" "$ZSH/custom/themes/santi.zsh-theme" "$HOME/.gitignore_global" "$HOME/.zshrc.local" "$HOME/.hosts.local"
 
 # Specify the dotfiles directory
 dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Ensure the ZSH themes directory exists
-if [ ! -d "$ZSH/themes" ]; then
-    echo "Error: $ZSH/themes directory not found."
+# Ensure the ZSH custom themes directory exists
+if [ ! -d "$ZSH/custom/themes" ]; then
+    echo "Error: $ZSH/custom/themes directory not found."
     exit 1
 fi
 
@@ -227,7 +227,7 @@ create_symlink "$dotfiles_dir/hosts.local" "$HOME/.hosts.local"
 # Create other symbolic links
 create_symlink "$dotfiles_dir/.zshrc" "$HOME/.zshrc"
 create_symlink "$dotfiles_dir/.vimrc" "$HOME/.vimrc"
-create_symlink "$dotfiles_dir/santi.zsh-theme" "$ZSH/themes/santi.zsh-theme"
+create_symlink "$dotfiles_dir/santi.zsh-theme" "$ZSH/custom/themes/santi.zsh-theme"
 create_symlink "$dotfiles_dir/.gitignore_global" "$HOME/.gitignore_global"
 
 print_msg "Symbolic links created successfully."
