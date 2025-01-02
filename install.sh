@@ -155,6 +155,46 @@ ensure_sites_directory() {
     fi
 }
 
+update_gitconfig() {
+    local dotfiles_gitconfig="$dotfiles_dir/.gitconfig"
+    local current_gitconfig="$HOME/.gitconfig"
+
+    if [ ! -f "$dotfiles_gitconfig" ]; then
+        print_msg "Dotfiles .gitconfig file not found. Skipping Git configuration update."
+        return
+    fi
+
+    print_msg "Updating .gitconfig with dotfiles values..."
+
+    local section=""
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        line=$(echo "$line" | xargs)
+
+        # Eliminar líneas vacías
+        if [[ -z "$line" ]]; then
+            continue
+        fi
+
+        if [[ "$line" == \[*\] ]]; then
+            section="${line//[[:space:]]/}"
+            section="${section//[[]/}"
+            section="${section//[]]/}"
+        else
+            local key=$(echo "$line" | cut -d '=' -f 1 | xargs)
+            local value=$(echo "$line" | cut -d '=' -f 2- | xargs)
+
+            if [[ -n "$key" && -n "$value" && -n "$section" ]]; then
+                git config --global "$section.$key" "$value" || {
+                    echo "Error setting git config for $section.$key"
+                    return 1
+                }
+            fi
+        fi
+    done < "$dotfiles_gitconfig"
+
+    print_msg ".gitconfig updated successfully."
+}
+
 # Check if Homebrew is installed, if not, install it
 if ! command -v brew &> /dev/null; then
     print_msg "Homebrew not found. Installing Homebrew..."
@@ -231,6 +271,8 @@ create_symlink "$dotfiles_dir/santi.zsh-theme" "$ZSH/custom/themes/santi.zsh-the
 create_symlink "$dotfiles_dir/.gitignore_global" "$HOME/.gitignore_global"
 
 print_msg "Symbolic links created successfully."
+
+update_gitconfig
 
 # Execute the update-hosts.sh script
 print_msg "Executing update-hosts.sh script..."
