@@ -10,6 +10,7 @@ source $ZSH/oh-my-zsh.sh
 # Aliases
 # ===================================
 # General
+# alias ls='eza --icons'
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'

@@ -2,13 +2,11 @@
 
 # Colors for messages
 green='\033[0;32m'
-yellow='\033[1;33m'
-blue='\033[0;34m'
-nc='\033[0m' # No color
+no_color='\033[0m'
 
 # Formatted message
 print_msg() {
-    echo -e "${green}[INFO]${nc} $1"
+    echo -e "${green}[INFO]${no_color} $1"
 }
 
 # Function to install or update a Homebrew package
@@ -60,7 +58,7 @@ install_or_update_brew_cask_package() {
     print_msg "Installing $cask_package..."
     
     # Normalize the cask package name by converting it to lowercase and removing spaces
-    normalized_cask_package=$(echo "$cask_package" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+    normalized_cask_package=$(echo "$cask_package" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]' | tr -d '-')
     
     # Get all the app names from /Applications, normalize them (lowercase and no spaces)
     # Using a loop to process the output of find line by line
@@ -72,7 +70,7 @@ install_or_update_brew_cask_package() {
     # Check if the normalized app name already exists in /Applications
     for app in "${apps_in_applications[@]}"; do
         # Normalize each app name (remove spaces and convert to lowercase)
-        normalized_app_name=$(echo "$(basename "$app" .app)" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+        normalized_app_name=$(echo "$(basename "$app" .app)" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]' | tr -d '-')
 
         # If the normalized app name matches the desired cask_package, skip installation
         if [[ "$normalized_app_name" == "$normalized_cask_package" ]]; then
@@ -170,7 +168,7 @@ update_gitconfig() {
     while IFS= read -r line || [[ -n "$line" ]]; do
         line=$(echo "$line" | xargs)
 
-        # Eliminar líneas vacías
+        # Remove empty lines
         if [[ -z "$line" ]]; then
             continue
         fi
@@ -212,7 +210,12 @@ install_or_update_brew_package "direnv"
 install_or_update_brew_package "pv"
 install_or_update_brew_package "tmux"
 install_or_update_brew_package "meetingbar"
+install_or_update_brew_package "eza"
+install_or_update_brew_cask_package "docker"
 install_or_update_brew_cask_package "rectangle"
+install_or_update_brew_cask_package "font-jetbrains-mono"
+install_or_update_brew_cask_package "font-jetbrains-mono-nerd-font"
+install_or_update_brew_cask_package "visual-studio-code"
 
 # Check and update Oh My Zsh
 if [ -d "$HOME/.oh-my-zsh" ]; then
