@@ -9,7 +9,7 @@
 [pager]
 	branch = false
 	diff = true
-	log = false
+	log = true
 	show = false
 	status = false
 [push]
