@@ -28,6 +28,8 @@ Backups are grouped by installation time in `~/.local/state/dotfiles/backups/`, 
 
 To restore one, inspect the selected backup, remove only the replacement symlink at the destination, then copy the backup back with `cp -P` (preserves symlinks). For Claude settings, copy the saved `settings.json` back instead. Git configuration is also saved before adding an include for the first time. No backup folder is deleted automatically.
 
+When Git or GPG edits the target of an existing configuration symlink, the backup also contains a private `.contents` file with the previous bytes. To undo that edit, restore those bytes to the original target, and restore the saved link if needed. The symlink alone points to the target and is not a snapshot of its contents.
+
 The private installer runs last and can override the tmuxp layout and Slots card. Existing links for these are saved first. This repo does not change the private installer's implementation.
 
 Hosts backups are separate, beside the system file as `/etc/hosts.dotfiles-<time>-<pid>`. Restore the selected one with sudo if necessary. A failed or malformed download never replaces the system file.

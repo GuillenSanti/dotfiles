@@ -14,7 +14,7 @@ HOME = Path.home()
 BACKUP = HOME / '.local/state/dotfiles/backups' / datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
 
 
-def backup(path):
+def backup(path, *, snapshot=False):
     relative = path.relative_to(HOME) if HOME in path.parents else Path('external') / str(path).lstrip('/')
     target = BACKUP / relative
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -29,6 +29,11 @@ def backup(path):
         number += 1
     if path.is_symlink():
         target.symlink_to(os.readlink(path))
+        if snapshot:
+            contents = target.with_name(target.name + '.contents')
+            with path.open('rb') as source, contents.open('xb') as saved:
+                os.fchmod(saved.fileno(), 0o600)
+                shutil.copyfileobj(source, saved)
     else:
         shutil.copy2(path, target)
     print(f'Backup: {target}')
@@ -106,7 +111,7 @@ def configure():
                               capture_output=True, text=True, check=False).stdout.splitlines()
     if shared not in includes and gitconfig.resolve() != Path(shared).resolve():
         if gitconfig.exists():
-            backup(gitconfig)
+            backup(gitconfig, snapshot=True)
         legacy = str(ROOT / '.gitconfig')
         if legacy in includes:
             subprocess.run(['git', 'config', '--global', '--fixed-value', '--replace-all',
@@ -122,7 +127,7 @@ def configure():
     if pinentry and not configured:
         agent_config.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         if agent_config.exists():
-            backup(agent_config)
+            backup(agent_config, snapshot=True)
         agent_config.write_text(existing.rstrip() + '\npinentry-program ' + str(Path(pinentry).resolve()) + '\n')
         agent_config.chmod(0o600)
         if shutil.which('gpgconf'):
