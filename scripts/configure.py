@@ -14,6 +14,18 @@ HOME = Path.home()
 BACKUP = HOME / '.local/state/dotfiles/backups' / datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
 
 
+def global_git_config():
+    override = os.environ.get('GIT_CONFIG_GLOBAL')
+    if override is not None:
+        if not override:
+            raise ValueError('GIT_CONFIG_GLOBAL must name a file, or be unset.')
+        path = Path(override).absolute()
+        return None if path.resolve() == Path(os.devnull).resolve() else path
+    default = HOME / '.gitconfig'
+    xdg = Path(os.environ.get('XDG_CONFIG_HOME') or HOME / '.config') / 'git/config'
+    return xdg if not os.access(default, os.R_OK) and os.access(xdg, os.R_OK) else default
+
+
 def backup(path, *, snapshot=False):
     relative = path.relative_to(HOME) if HOME in path.parents else Path('external') / str(path).lstrip('/')
     target = BACKUP / relative
@@ -67,6 +79,7 @@ def write_json(path, data):
 
 
 def configure():
+    gitconfig = global_git_config()
     settings_path = HOME / '.claude/settings.json'
     settings = json.loads(settings_path.read_text()) if settings_path.exists() else {}
     hooks = json.loads((ROOT / 'claude/hooks.json').read_text())['hooks']
@@ -105,19 +118,22 @@ def configure():
         link(source, path)
     write_json(settings_path, settings)
 
-    gitconfig = HOME / '.gitconfig'
     shared = str(ROOT / 'git/gitconfig')
-    includes = subprocess.run(['git', 'config', '--global', '--get-all', 'include.path'],
-                              capture_output=True, text=True, check=False).stdout.splitlines()
-    if shared not in includes and gitconfig.resolve() != Path(shared).resolve():
-        if gitconfig.exists():
-            backup(gitconfig, snapshot=True)
-        legacy = str(ROOT / '.gitconfig')
-        if legacy in includes:
-            subprocess.run(['git', 'config', '--global', '--fixed-value', '--replace-all',
-                            'include.path', shared, legacy], check=True)
-        else:
-            subprocess.run(['git', 'config', '--global', '--add', 'include.path', shared], check=True)
+    if gitconfig is not None:
+        result = subprocess.run(['git', 'config', '--global', '--get-all', 'include.path'],
+                                capture_output=True, text=True, check=False)
+        if result.returncode not in (0, 1):
+            result.check_returncode()
+        includes = result.stdout.splitlines()
+        if shared not in includes and gitconfig.resolve() != Path(shared).resolve():
+            if gitconfig.exists():
+                backup(gitconfig, snapshot=True)
+            legacy = str(ROOT / '.gitconfig')
+            if legacy in includes:
+                subprocess.run(['git', 'config', '--file', str(gitconfig), '--fixed-value', '--replace-all',
+                                'include.path', shared, legacy], check=True)
+            else:
+                subprocess.run(['git', 'config', '--file', str(gitconfig), '--add', 'include.path', shared], check=True)
     subprocess.run(['git', '-C', str(ROOT), 'config', 'core.hooksPath', '.githooks'], check=True)
 
     pinentry = shutil.which('pinentry-mac')
