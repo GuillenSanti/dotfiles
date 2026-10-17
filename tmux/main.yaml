@@ -1,0 +1,28 @@
+session_name: '0'
+options:
+  # Keeps the home window at 0: renumber-windows restarts from base-index
+  base-index: 0
+windows:
+  - window_name: 󰋜
+    window_index: 0
+    focus: 'true'
+    options:
+      automatic-rename: false
+    panes:
+      - shell_command:
+          - ~/.tmux/dash.py
+
+  - window_name: main
+    options:
+      automatic-rename: false
+      main-pane-width: '50%'
+    layout: main-vertical
+    start_directory: '~'
+    panes:
+      - focus: 'true'
+        shell_command:
+          - clear
+      - shell_command:
+          - clear
+      - shell_command:
+          - clear

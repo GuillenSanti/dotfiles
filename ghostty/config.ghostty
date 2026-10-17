@@ -1,0 +1,12 @@
+background=#000000
+macos-icon="xray"
+macos-titlebar-proxy-icon=hidden
+macos-titlebar-style = tabs
+macos-window-buttons = visible
+window-padding-x = 4
+window-padding-y = 0
+window-padding-balance = false
+title = " "
+font-family = "JetBrains Mono"
+term = xterm-256color
+theme = Dracula
