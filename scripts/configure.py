@@ -18,6 +18,10 @@ def backup(path):
     relative = path.relative_to(HOME) if HOME in path.parents else Path('external') / str(path).lstrip('/')
     target = BACKUP / relative
     target.parent.mkdir(parents=True, exist_ok=True)
+    folder = target.parent
+    while folder == BACKUP.parent or BACKUP.parent in folder.parents:
+        folder.chmod(0o700)
+        folder = folder.parent
     number = 1
     original = target
     while target.exists() or target.is_symlink():
