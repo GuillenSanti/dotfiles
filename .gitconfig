@@ -1,0 +1,21 @@
+[user]
+	name = Santiago Guillen
+[core]
+	excludesfile = ~/.gitignore_global
+	editor = vim
+[sequence]
+	editor = vim
+[commit]
+	gpgSign = true
+[pager]
+	branch = false
+	diff = true
+	log = true
+	show = false
+	status = false
+[push]
+    autoSetupRemote = true
+[pull]
+	rebase = true
+[init]
+	defaultBranch = main
