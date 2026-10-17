@@ -3,10 +3,22 @@
 # ===================================
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="santi"
+export DISABLE_AUTO_TITLE='true'
+
+if ! command -v brew >/dev/null; then
+  for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    if [[ -x "$brew_bin" ]]; then
+      eval "$("$brew_bin" shellenv)"
+      break
+    fi
+  done
+fi
 
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting dotenv extract)
 
-source $ZSH/oh-my-zsh.sh
+if [[ -f "$ZSH/oh-my-zsh.sh" ]]; then
+  source "$ZSH/oh-my-zsh.sh"
+fi
 
 # ===================================
 # Performance Optimizations
@@ -76,21 +88,18 @@ mkcd() {
   fi
 }
 
-# Load system-specific configurations
-if [ -f "$HOME/.zshrc.local" ]; then
-    source "$HOME/.zshrc.local"
+[[ -t 0 ]] && export GPG_TTY=$(tty)
+if command -v direnv >/dev/null; then
+  eval "$(direnv hook zsh)"
 fi
 
-export GPG_TTY=$(tty)
-eval "$(direnv hook zsh)"
-
 # asdf
-export PATH="/opt/homebrew/opt/asdf/bin:$PATH"
-export PATH="/opt/homebrew/opt/asdf/shims:$PATH"
-. "/opt/homebrew/opt/asdf/libexec/asdf.sh"
-
-# tmux
-export DISABLE_AUTO_TITLE='true'
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+if command -v brew >/dev/null; then
+  asdf_init="$(brew --prefix)/opt/asdf/libexec/asdf.sh"
+  [[ -f "$asdf_init" ]] && source "$asdf_init"
+  unset asdf_init
+fi
 
 # Flag the tmux window when a command finishes while you're on another one
 if [[ -n $TMUX ]]; then
@@ -115,3 +124,6 @@ export PATH="$HOME/.opencode/bin:$PATH"
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+
+# Local overrides run last so shared defaults cannot overwrite them.
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"

@@ -4,73 +4,25 @@ This repository contains my personal dotfiles and configuration settings for var
 
 ## Installation
 
-To get started with these dotfiles, follow these steps:
+Clone this repo into `~/dotfiles`. Install Homebrew separately if needed, then choose an action:
 
-1. **Clone the repository**:
+```sh
+./install.sh --dependencies  # install missing packages, plugins, agents and deck
+./install.sh                 # apply configuration only (same as --config)
+./install.sh --all           # dependencies, then configuration
+./install.sh --update        # explicitly upgrade packages, plugins and deck
+./install.sh --hosts         # explicitly replace /etc/hosts after confirmation
+```
 
-    First, clone this repository to your machine:
+The default action needs Git and Python 3. It does not download or upgrade software and does not change `/etc/hosts`. Installing dependencies needs Homebrew and network access; package compatibility depends on your macOS version. `--update` does not update this dotfiles checkout itself; pull its changes separately, then run `--config`.
 
-    ```bash
-    git clone https://github.com/GuillenSanti/dotfiles.git ~/dotfiles
-    cd ~/dotfiles
-    ```
+Configuration creates or repairs links for Zsh, Vim, tmux, Ghostty and agents, merges Claude's hooks without removing other settings, and includes the shared Git preferences without changing your name, email or signing key. Existing files and changed links are backed up under `~/.local/state/dotfiles/backups/`. See [installation and recovery](docs/installation.md).
 
-2. **Run the installation script**:
+Existing `~/.zshrc.local` and `~/.hosts.local` are kept, including links into an older checkout. When absent, local files are created in this checkout and linked into your home. These files are ignored by Git. Local shell overrides load last. Import `RectangleConfig.json` manually from Rectangle if desired.
 
-    The `install.sh` script will set up your environment, install necessary packages, and create symbolic links for your configuration files.
+When `pinentry-mac` is available and no pinentry program is already configured, configuration adds it to `~/.gnupg/gpg-agent.conf`. At the first GPG password prompt, select **Save in Keychain**; allow future access if macOS asks. Existing GPG program, identity and key settings are kept.
 
-    ```bash
-    ./install.sh
-    ```
-
-    This script will do the following:
-    - Check if **Homebrew** is installed and install it if not.
-    - Install or upgrade everything in the `Brewfile` with `brew bundle`: the command-line tools (`gh`, `tmux`, `tmuxp`, `fzf`, `asdf`, `neovim`…), the fonts and apps such as **Ghostty**, **Rectangle** and **MeetingBar**. See [Homebrew packages](#homebrew-packages).
-    - Install **Claude Code** and **opencode** with their own installers if they aren't installed, as on this machine, rather than from the Brewfile. Claude Code updates itself; opencode updates with `opencode upgrade`.
-    - Install **Oh My Zsh** if it's not already installed.
-    - Install and configure Zsh plugins such as `zsh-autosuggestions`, `zsh-syntax-highlighting`, and `zsh-fzf-history-search`.
-    - Set up symbolic links for the following files:
-      - `~/.zshrc` (Zsh configuration)
-      - `~/.vimrc` (Vim configuration)
-      - `~/.gitignore_global` (Global Git ignore file)
-      - Custom Zsh theme `~/.oh-my-zsh/themes/santi.zsh-theme`
-      - `~/.tmux.conf` and the status bar scripts in `~/.tmux/`
-      - opencode plugin `~/.config/opencode/plugins/attention.js`
-      - `cafe-on`, `cafe-off` and `cafe-status` in `~/.local/bin`
-      - Global agent rules `opencode/AGENTS.md`, as `~/.config/opencode/AGENTS.md`, `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`
-      - Claude Code status line `~/.claude/statusline.py`
-      - Ghostty configuration `~/Library/Application Support/com.mitchellh.ghostty/config.ghostty`
-    - Clone the [deck](https://github.com/GuillenSanti/deck) into `deck/` (or update it) and run its `install.sh`, which links its commands into `~/.tmux/`.
-    - Merge the Claude Code hooks from `claude/hooks.json` into `~/.claude/settings.json`, and point its `statusLine` at `~/.claude/statusline.py` (the rest of the file is kept).
-    - Create the `~/.zshrc.local` file (if not already created) for machine-specific configurations.
-    - Create the `~/.hosts.local` file (if not already created) for machine-specific hosts configurations.
-    - Execute the `update-hosts.sh` script to update your hosts file.
-    - Check every commit to this repo with `gitleaks` (`core.hooksPath` to `.githooks`), see [Keeping it public](#keeping-it-public).
-    - Run `private/install.sh` last, when there's a `private/` folder (a private repo of your own, cloned there), so its links win over the ones above.
-
-3. **Configure `~/.zshrc.local` and `~/.hosts.local` (optional)**:
-
-    If you have machine-specific configurations (like environment variables, aliases, or other settings), you can add them to the `~/.zshrc.local` and `~/.hosts.local` files. These files are sourced at the end of your main `~/.zshrc` file.
-
-    - Add any custom settings or exports in `~/.zshrc.local`, for example:
-
-      ```bash
-      export PATH="$PATH:/some/custom/path"
-      alias gs="git status"
-      ```
-
-    - For `~/.hosts.local`, you can add custom host entries:
-
-      ```bash
-      127.0.0.1   my-custom-host.local
-      192.168.1.100 another-host.local
-      ```
-
-    The `~/.zshrc.local` file will be automatically loaded by your main `~/.zshrc`, and the `~/.hosts.local` file will be included in the `/etc/hosts` configuration.
-
-4. **Configure Rectangle settings**:
-
-    If you're using the **Rectangle** app for window management, you can import the provided `RectangleConfig.json` file into the app to use the predefined settings.
+If a private checkout is present, its installer runs last. The deck's four commands are linked when a deck checkout is present; use `--dependencies` to download it first.
 
 ## Zsh Plugins
 
@@ -80,7 +32,7 @@ This setup includes the following Zsh plugins:
 - **[zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)**: Highlights syntax as you type commands in the terminal.
 - **[zsh-fzf-history-search](https://github.com/joshskidmore/zsh-fzf-history-search)**: Fuzzy search through your Zsh history.
 
-These plugins are automatically installed during the setup process.
+These plugins are installed by `./install.sh --dependencies` and updated by `--update`.
 
 ## tmux attention indicator
 
@@ -105,7 +57,7 @@ All of them call `~/.tmux/attention.sh done|ask`. After installing, restart runn
 
 ## Home dashboard (deck)
 
-The tmux home dashboard, in window 0, is a repo of its own: [deck](https://github.com/GuillenSanti/deck). `install.sh` clones it into `deck/` (or updates it) and runs its `install.sh`, which links `~/.tmux/dash.py` and its other commands. What it relies on stays here: the attention indicator above (agents asking or done), the `prefix R` binding that reviews a PR, OSC 8 hyperlinks in `.tmux.conf`, and the tmuxp layout that opens it in window 0.
+The tmux home dashboard, in window 0, is a repo of its own: [deck](https://github.com/GuillenSanti/deck). `--dependencies` clones it into `deck/`, `--update` updates it, and `--config` links `~/.tmux/dash.py` and its other commands. What it relies on stays here: the attention indicator above (agents asking or done), the `prefix R` binding that reviews a PR, OSC 8 hyperlinks in `.tmux.conf`, and the tmuxp layout that opens it in window 0.
 
 ## Keeping it public
 
@@ -151,7 +103,7 @@ If you're using multiple systems (work, personal, etc.), the `~/.zshrc.local` an
 
 ## Homebrew packages
 
-`Brewfile` lists every Homebrew package and app to install, grouped by what it's for. `install.sh` runs `brew bundle` on it, which installs what's missing and upgrades what's outdated. To add one, add its `brew` or `cask` line and run:
+`Brewfile` lists every Homebrew package and app to install, grouped by what it's for. `--dependencies` installs missing packages without upgrading existing ones; `--update` runs `brew bundle` with upgrades enabled. To add one, add its `brew` or `cask` line and run:
 
 ```bash
 brew bundle --file=~/dotfiles/Brewfile
@@ -168,10 +120,10 @@ To update your dotfiles on your machine, follow these steps:
 1. **Pull the latest changes from the repository**:
 
     ```bash
-    git pull origin main
+    git pull --ff-only origin main
     ```
 
-2. **Re-run the `install.sh` script** to apply any changes:
+2. **Apply the configuration** (run `--dependencies` first if new packages were added):
 
     ```bash
     ./install.sh
@@ -179,21 +131,7 @@ To update your dotfiles on your machine, follow these steps:
 
 ## Troubleshooting
 
-If you encounter any issues during the installation process:
-
-- **Homebrew issues**: Ensure that your system is up-to-date. On macOS, you can run:
-
-    ```bash
-    softwareupdate --install --all
-    ```
-
-- **Zsh or Oh My Zsh issues**: If Zsh or Oh My Zsh isn't working properly, try reinstalling them:
-
-    ```bash
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-    ```
-
-- **Missing scripts**: If the `update-hosts.sh` script is missing, make sure it exists in the root of the repository.
+See [installation and recovery](docs/installation.md) for backups, local overrides, Git settings and verification. Installation errors stop the requested action; resolve them before rerunning it. The script never upgrades macOS automatically.
 
 ## License
 
