@@ -9,7 +9,7 @@ before: the launchd job com.santiago.caffeinate, until cafe-off. cafe-off --all 
 agents' included (say, before leaving on battery).
 
 ~/.cache/cafe holds a file per agent keeping it awake: named after the agent's pid, with its
-caffeinate's pid, its tmux window and since when. tmux/caffeinate.sh shows them in the status bar.
+caffeinate's pid, its tmux window and since when. tmux/status/caffeinate.sh shows them in the status bar.
 """
 
 import datetime

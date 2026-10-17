@@ -9,7 +9,7 @@ These are my personal defaults. When a project's own instructions (AGENTS.md, CL
 
 ## Demo Videos
 - Record demos in real time with Playwright's `recordVideo`. Use the same script and data for **Before** and **After**, so the two differ only by the change.
-- Make each video clear on its own: show the cursor, add a short caption for every step over an empty part of the screen, and highlight what the caption talks about. `~/dotfiles/opencode/demo-video-overlay.cjs` does all three.
+- Make each video clear on its own: show the cursor, add a short caption for every step over an empty part of the screen, and highlight what the caption talks about. `~/dotfiles/agents/demo-video-overlay.cjs` does all three.
 - Start once the page has loaded, trimming the loading, and end on proof that lasts, such as reopening the record to show what was stored.
 - Use real actions only: never abort or fake a request to provoke an error.
 - Re-record the **After** video whenever the code it shows changes, and restore any data the demo changed.

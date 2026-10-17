@@ -35,3 +35,32 @@ Hosts backups are separate, beside the system file as `/etc/hosts.dotfiles-<time
 ## Verify before applying
 
 Run `python3 -m unittest discover -s tests -v`. The tests use temporary checkouts and home directories, check repeated installation and preservation of settings, and mock network/system writes for hosts failures. They do not install packages or change your real home.
+
+## Installed paths
+
+| Source | Installed location |
+|---|---|
+| `zsh/zshrc` | `~/.zshrc` |
+| `zsh/santi.zsh-theme` | Oh My Zsh's custom themes directory |
+| `git/gitconfig` | Included by `~/.gitconfig`; identity stays personal |
+| `git/gitignore_global` | `~/.gitignore_global` |
+| `vim/vimrc` | `~/.vimrc` |
+| `tmux/tmux.conf` | `~/.tmux.conf` |
+| `tmux/main.yaml` | `~/.tmuxp/main.yaml`; private layout can override it |
+| `tmux/status/*.sh`, `tmux/attention.sh` | Same filenames under `~/.tmux/` |
+| `bin/cafe.py` | `~/.local/bin/cafe-on`, `cafe-off`, `cafe-status` |
+| `agents/AGENTS.md` | `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md` |
+| `agents/demo-video-overlay.cjs` | Used directly by demo scripts; no installation link |
+| `claude/hooks.json` | Merged into `~/.claude/settings.json` |
+| `claude/statusline.py` | `~/.claude/statusline.py` |
+| `opencode/plugins/attention.js` | `~/.config/opencode/plugins/attention.js` |
+| `ghostty/config.ghostty` | Ghostty's Application Support configuration |
+| `rectangle/RectangleConfig.json` | Import manually in Rectangle |
+| `examples/*` | Used only when creating missing local override files |
+| `hosts/hosts` | Input to `hosts/update-hosts.sh`; never installed implicitly |
+
+## Upgrade from the flat layout
+
+After pulling this reorganization, run `./install.sh --config` before starting new shells or agents. It repairs links to moved source files, saves previous targets and replaces this checkout's old Git include when present. Runtime command names and home locations stay the same. Existing local overrides and the private checkout are kept.
+
+Do not delete an older checkout while `~/.zshrc.local` or `~/.hosts.local` still points into it. Move those personal files to a permanent location first. The private installer continues to run last and supplies the same layout and Slots card locations.

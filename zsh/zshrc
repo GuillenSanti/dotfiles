@@ -47,7 +47,7 @@ alias ..='cd ..'
 alias agents-history='~/.tmux/agents-history.py'  # every agent CLI session, with fzf
 alias ...='cd ../..'
 
-# caffeinate: cafe-on, cafe-off and cafe-status are tmux/cafe.py, linked in ~/.local/bin
+# caffeinate: cafe-on, cafe-off and cafe-status are bin/cafe.py, linked in ~/.local/bin
 unalias cafe-on cafe-off cafe-status 2>/dev/null  # the old aliases, in shells that load this again
 
 # Git

@@ -11,7 +11,7 @@ trap 'rm -rf "$work_dir"' EXIT
 url=https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling/hosts
 curl --fail --show-error --silent --location "$url" -o "$work_dir/download"
 local_hosts="$HOME/.hosts.local"
-[[ -f "$local_hosts" ]] || local_hosts="$root/hosts.local"
+[[ -f "$local_hosts" ]] || local_hosts="${root%/*}/hosts.local"
 {
     cat "$root/hosts"
     printf '\n'

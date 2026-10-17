@@ -2,6 +2,32 @@
 
 This repository contains my personal dotfiles and configuration settings for various tools I use across different systems.
 
+## Repository map
+
+```text
+bin/          Commands available outside tmux, including cafe-on/off/status
+agents/       Rules and demo helpers shared by Claude, Codex and opencode
+zsh/          Shell configuration and prompt theme
+git/          Shared Git preferences and global ignore patterns
+vim/          Vim settings
+tmux/         tmux config, layout, attention integration and status indicators
+ghostty/      Ghostty settings
+claude/       Claude-specific hooks and status line
+opencode/     opencode-specific plugins
+rectangle/    Window-management settings to import manually
+hosts/        Base host entries and the explicit hosts updater
+examples/     Templates for local overrides; personal values stay untracked
+scripts/      Installation helpers
+tests/        Installation checks using temporary homes
+docs/         Screenshots and installation/recovery documentation
+deck/         Separate dashboard checkout, ignored by this repository
+private/      Optional private checkout, also ignored
+```
+
+The root keeps the entry point (`install.sh`), package list (`Brewfile`), README and repository maintenance files (`.github/`, `.githooks/`, `.gitignore`, `.gitleaks.toml`). `agents/AGENTS.md` is shared agent configuration; it is not the instructions file for maintaining this repository.
+
+Source locations differ from installed paths. For example, `zsh/zshrc` links to `~/.zshrc`, `git/gitconfig` is included by Git, and `bin/cafe.py` links to the three `~/.local/bin/cafe-*` commands. Files in `tmux/status/` keep their existing `~/.tmux/` command paths. See [all installed paths](docs/installation.md#installed-paths).
+
 ## Installation
 
 Clone this repo into `~/dotfiles`. Install Homebrew separately if needed, then choose an action:
@@ -18,7 +44,7 @@ The default action needs Git and Python 3. It does not download or upgrade softw
 
 Configuration creates or repairs links for Zsh, Vim, tmux, Ghostty and agents, merges Claude's hooks without removing other settings, and includes the shared Git preferences without changing your name, email or signing key. Existing files and changed links are backed up under `~/.local/state/dotfiles/backups/`. See [installation and recovery](docs/installation.md).
 
-Existing `~/.zshrc.local` and `~/.hosts.local` are kept, including links into an older checkout. When absent, local files are created in this checkout and linked into your home. These files are ignored by Git. Local shell overrides load last. Import `RectangleConfig.json` manually from Rectangle if desired.
+Existing `~/.zshrc.local` and `~/.hosts.local` are kept, including links into an older checkout. When absent, local files are created in this checkout and linked into your home. These files are ignored by Git. Local shell overrides load last. Import `rectangle/RectangleConfig.json` manually from Rectangle if desired.
 
 When `pinentry-mac` is available and no pinentry program is already configured, configuration adds it to `~/.gnupg/gpg-agent.conf`. At the first GPG password prompt, select **Save in Keychain**; allow future access if macOS asks. Existing GPG program, identity and key settings are kept.
 
@@ -40,14 +66,14 @@ When something needs you in a window you're not looking at, the tmux status bar 
 
 - **Claude Code**: hooks in `claude/hooks.json`.
 - **opencode**: plugin in `opencode/plugins/attention.js`.
-- **zsh**: a command finishes while you're on another window (`.zshrc`).
+- **zsh**: a command finishes while you're on another window (`zsh/zshrc`).
 - **Anything else**: any terminal bell (e.g. `make test; printf '\a'`).
 
 All of them call `~/.tmux/attention.sh done|ask`. After installing, restart running opencode sessions and `source ~/.zshrc` in open shells.
 
 ## Keeping the Mac awake (`cafe-on`)
 
-`cafe-on`, `cafe-off` and `cafe-status` (`tmux/cafe.py`, linked in `~/.local/bin` so agents' shells find them without `.zshrc`) keep the Mac awake while agents work, without one agent's `cafe-off` letting the Mac sleep under another that's still working:
+`cafe-on`, `cafe-off` and `cafe-status` (`bin/cafe.py`, linked in `~/.local/bin` so agents' shells find them without `.zshrc`) keep the Mac awake while agents work, without one agent's `cafe-off` letting the Mac sleep under another that's still working:
 
 - **From an agent** (Claude Code, opencode or Codex, found by walking up its process tree): `cafe-on` starts that agent's own `caffeinate -dims` and `cafe-off` stops only that one. macOS sleeps only once no caffeinate is left, so another agent's keeps it awake. An agent's caffeinate is tied to it (`-w`), so it also ends when the agent does, even without `cafe-off`.
 - **From your own shell**: `cafe-on` and `cafe-off` switch the persistent one, as before (the launchd job `com.santiago.caffeinate`), until `cafe-off`.
@@ -57,7 +83,7 @@ All of them call `~/.tmux/attention.sh done|ask`. After installing, restart runn
 
 ## Home dashboard (deck)
 
-The tmux home dashboard, in window 0, is a repo of its own: [deck](https://github.com/GuillenSanti/deck). `--dependencies` clones it into `deck/`, `--update` updates it, and `--config` links `~/.tmux/dash.py` and its other commands. What it relies on stays here: the attention indicator above (agents asking or done), the `prefix R` binding that reviews a PR, OSC 8 hyperlinks in `.tmux.conf`, and the tmuxp layout that opens it in window 0.
+The tmux home dashboard, in window 0, is a repo of its own: [deck](https://github.com/GuillenSanti/deck). `--dependencies` clones it into `deck/`, `--update` updates it, and `--config` links `~/.tmux/dash.py` and its other commands. What it relies on stays here: the attention indicator above (agents asking or done), the `prefix R` binding that reviews a PR, OSC 8 hyperlinks in `tmux/tmux.conf`, and the tmuxp layout that opens it in window 0.
 
 ## Keeping it public
 
@@ -67,7 +93,7 @@ Whatever only makes sense on one machine or at one job goes in `private/`, a pri
 
 ## Global agent rules
 
-`opencode/AGENTS.md` holds the rules every coding agent follows in any project: git and PR workflow, commit messages, keeping the Mac awake with `cafe-on`/`cafe-off`, scope, comments and security. opencode reads it as `~/.config/opencode/AGENTS.md`, Claude Code as `~/.claude/CLAUDE.md` and Codex as `~/.codex/AGENTS.md`, all linked to the same file, so editing it changes all three. When a project's own instructions say something different, the project wins. Changes apply to new sessions.
+`agents/AGENTS.md` holds the rules every coding agent follows in any project: git and PR workflow, commit messages, keeping the Mac awake with `cafe-on`/`cafe-off`, scope, comments and security. opencode reads it as `~/.config/agents/AGENTS.md`, Claude Code as `~/.claude/CLAUDE.md` and Codex as `~/.codex/AGENTS.md`, all linked to the same file, so editing it changes all three. When a project's own instructions say something different, the project wins. Changes apply to new sessions.
 
 ## Claude Code status line
 

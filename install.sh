@@ -57,7 +57,7 @@ case "$action" in
     --config) configure ;;
     --dependencies) dependencies no ;;
     --update) dependencies yes ;;
-    --hosts) bash "$dotfiles_dir/update-hosts.sh" ;;
+    --hosts) bash "$dotfiles_dir/hosts/update-hosts.sh" ;;
     --all) dependencies no; configure ;;
     --help|-h) usage ;;
     *) usage >&2; exit 2 ;;

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Shows a coffee icon in the tmux status bar while something keeps the Mac awake through cafe-on
-# (tmux/cafe.py): the icon alone for your persistent launchd job (com.santiago.caffeinate), the
+# (bin/cafe.py): the icon alone for your persistent launchd job (com.santiago.caffeinate), the
 # number of agents holding their own after it, and +N when both (after a space, or the icon draws
 # small). Claude Code's transient one doesn't count.
 # Icon: nf-fa-coffee (U+F0F4) emitted as raw UTF-8 bytes — macOS system

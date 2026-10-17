@@ -1,0 +1,3 @@
+# Loaded after shared shell defaults. Keep machine-specific settings here.
+# export PATH="$HOME/tools/bin:$PATH"
+# alias project='cd ~/code/project'

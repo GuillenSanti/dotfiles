@@ -50,7 +50,7 @@ class InstallTests(unittest.TestCase):
         command.parent.mkdir(parents=True)
         command.symlink_to(old)
         self.install()
-        self.assertEqual(command.resolve(), self.repo / 'tmux/cafe.py')
+        self.assertEqual(command.resolve(), self.repo / 'bin/cafe.py')
         self.assertEqual((self.home / '.zshrc.local').read_text(), 'export LOCAL_VALUE=kept\n')
         backups = self.home / '.local/state/dotfiles/backups'
         self.assertTrue(any(p.read_text() == 'original shell\n' for p in backups.glob('*/.zshrc')))
@@ -62,7 +62,7 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(value.strip(), 'Example')
         includes = subprocess.check_output(['git', 'config', '--global', '--get-all', 'include.path'],
                                            env=self.env, text=True).splitlines()
-        self.assertEqual(includes, [str(self.repo / '.gitconfig')])
+        self.assertEqual(includes, [str(self.repo / 'git/gitconfig')])
 
     def test_local_files_and_nested_repositories_are_ignored(self):
         paths = ['.zshrc.local', 'hosts.local', 'deck/probe', 'private/probe']
@@ -84,7 +84,7 @@ class InstallTests(unittest.TestCase):
         self.tool('sudo', f'touch "{marker}"; exit 1')
         for command in ('exit 22', 'for last; do :; done; printf "<html>error</html>" > "$last"'):
             self.tool('curl', command)
-            result = subprocess.run(['bash', str(self.repo / 'update-hosts.sh')], env=self.env,
+            result = subprocess.run(['bash', str(self.repo / 'hosts/update-hosts.sh')], env=self.env,
                                     input='yes\n', capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
             self.assertFalse(marker.exists())
@@ -99,9 +99,9 @@ class InstallTests(unittest.TestCase):
         self.install()
         config = self.home / '.gnupg/gpg-agent.conf'
         self.assertIn('pinentry-program ' + str(app), config.read_text())
-        config.write_text('pinentry-program /custom/pinentry\n')
+        config.write_text('pinentry-program\t/custom/pinentry\n')
         self.install()
-        self.assertEqual(config.read_text(), 'pinentry-program /custom/pinentry\n')
+        self.assertEqual(config.read_text(), 'pinentry-program\t/custom/pinentry\n')
 
     def test_private_layout_and_existing_local_symlink_survive_repeated_install(self):
         local = self.base / 'old-local'
@@ -117,6 +117,39 @@ class InstallTests(unittest.TestCase):
         self.install()
         self.assertEqual((self.home / '.tmuxp/main.yaml').resolve(), private / 'main.yaml')
         self.assertEqual((self.home / '.zshrc.local').resolve(), local)
+
+    def test_upgrade_repairs_old_source_paths_and_git_include(self):
+        (self.home / '.zshrc').symlink_to(self.repo / '.zshrc')
+        rules = self.home / '.config/opencode/AGENTS.md'
+        rules.parent.mkdir(parents=True)
+        rules.symlink_to(self.repo / 'opencode/AGENTS.md')
+        subprocess.run(['git', 'config', '--global', '--add', 'include.path', str(self.repo / '.gitconfig')],
+                       env=self.env, check=True)
+        self.install()
+        self.assertEqual((self.home / '.zshrc').resolve(), self.repo / 'zsh/zshrc')
+        self.assertEqual(rules.resolve(), self.repo / 'agents/AGENTS.md')
+        includes = subprocess.check_output(['git', 'config', '--global', '--get-all', 'include.path'],
+                                           env=self.env, text=True).splitlines()
+        self.assertEqual(includes, [str(self.repo / 'git/gitconfig')])
+
+    def test_hosts_success_keeps_local_entries_without_real_system_writes(self):
+        capture = self.base / 'combined-hosts'
+        (self.home / '.hosts.local').write_text('127.0.0.1 example.test\n')
+        self.tool('curl', 'for last; do :; done; printf "0.0.0.0 blocked.test\\n" > "$last"')
+        self.tool('sudo', f'if [ "$1" = install ]; then cp "$4" "{capture}"; fi')
+        subprocess.run(['bash', str(self.repo / 'hosts/update-hosts.sh')], env=self.env,
+                       input='yes\n', capture_output=True, text=True, check=True)
+        text = capture.read_text()
+        self.assertIn('127.0.0.1 example.test', text)
+        self.assertIn('0.0.0.0 blocked.test', text)
+
+    def test_shell_loads_local_overrides_after_shared_defaults(self):
+        self.tool('brew', f'printf "%s\\n" "{self.base}/brew"')
+        (self.home / '.zshrc.local').write_text('export PATH=/local-only\n')
+        self.install()
+        result = subprocess.run(['zsh', '-f', '-c', 'source "$HOME/.zshrc"; print -r -- "$PATH"'],
+                                env=self.env, capture_output=True, text=True, check=True)
+        self.assertEqual(result.stdout.strip(), '/local-only')
 
 
 if __name__ == '__main__':

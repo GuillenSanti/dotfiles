@@ -67,9 +67,9 @@ def configure():
     settings['statusLine'] = {'type': 'command', 'command': '/usr/bin/python3 ~/.claude/statusline.py'}
 
     links = {
-        '.zshrc': '.zshrc', '.vimrc': '.vimrc', '.gitignore_global': '.gitignore_global',
-        '.tmux.conf': '.tmux.conf', 'tmux/main.yaml': '.tmuxp/main.yaml',
-        'tmux/battery.sh': '.tmux/battery.sh', 'tmux/caffeinate.sh': '.tmux/caffeinate.sh',
+        'zsh/zshrc': '.zshrc', 'vim/vimrc': '.vimrc', 'git/gitignore_global': '.gitignore_global',
+        'tmux/tmux.conf': '.tmux.conf', 'tmux/main.yaml': '.tmuxp/main.yaml',
+        'tmux/status/battery.sh': '.tmux/battery.sh', 'tmux/status/caffeinate.sh': '.tmux/caffeinate.sh',
         'tmux/attention.sh': '.tmux/attention.sh',
         'opencode/plugins/attention.js': '.config/opencode/plugins/attention.js',
         'claude/statusline.py': '.claude/statusline.py',
@@ -78,11 +78,11 @@ def configure():
     for source, destination in links.items():
         link(ROOT / source, HOME / destination)
     custom = Path(os.environ.get('ZSH_CUSTOM', str(HOME / '.oh-my-zsh/custom')))
-    link(ROOT / 'santi.zsh-theme', custom / 'themes/santi.zsh-theme')
+    link(ROOT / 'zsh/santi.zsh-theme', custom / 'themes/santi.zsh-theme')
     for destination in ('.config/opencode/AGENTS.md', '.claude/CLAUDE.md', '.codex/AGENTS.md'):
-        link(ROOT / 'opencode/AGENTS.md', HOME / destination)
+        link(ROOT / 'agents/AGENTS.md', HOME / destination)
     for command in ('cafe-on', 'cafe-off', 'cafe-status'):
-        link(ROOT / 'tmux/cafe.py', HOME / '.local/bin' / command)
+        link(ROOT / 'bin/cafe.py', HOME / '.local/bin' / command)
 
     # Preserve local overrides at their existing location, including old checkout symlinks.
     for name, source_name in (('.zshrc.local', '.zshrc.local'), ('.hosts.local', 'hosts.local')):
@@ -91,24 +91,31 @@ def configure():
             continue
         source = ROOT / source_name
         if not source.exists():
-            source.write_text('# Machine-specific configuration. Not committed.\n')
+            example = 'zshrc.local.example' if name == '.zshrc.local' else 'hosts.local.example'
+            source.write_text((ROOT / 'examples' / example).read_text())
         link(source, path)
     write_json(settings_path, settings)
 
     gitconfig = HOME / '.gitconfig'
-    shared = str(ROOT / '.gitconfig')
+    shared = str(ROOT / 'git/gitconfig')
     includes = subprocess.run(['git', 'config', '--global', '--get-all', 'include.path'],
                               capture_output=True, text=True, check=False).stdout.splitlines()
     if shared not in includes:
         if gitconfig.exists():
             backup(gitconfig)
-        subprocess.run(['git', 'config', '--global', '--add', 'include.path', shared], check=True)
+        legacy = str(ROOT / '.gitconfig')
+        if legacy in includes:
+            subprocess.run(['git', 'config', '--global', '--fixed-value', '--replace-all',
+                            'include.path', shared, legacy], check=True)
+        else:
+            subprocess.run(['git', 'config', '--global', '--add', 'include.path', shared], check=True)
     subprocess.run(['git', '-C', str(ROOT), 'config', 'core.hooksPath', '.githooks'], check=True)
 
     pinentry = shutil.which('pinentry-mac')
     agent_config = HOME / '.gnupg/gpg-agent.conf'
     existing = agent_config.read_text() if agent_config.exists() else ''
-    if pinentry and not any(line.strip().startswith('pinentry-program ') for line in existing.splitlines()):
+    configured = any(line.split()[:1] == ['pinentry-program'] for line in existing.splitlines())
+    if pinentry and not configured:
         agent_config.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         if agent_config.exists():
             backup(agent_config)
