@@ -100,7 +100,7 @@ def configure():
     shared = str(ROOT / 'git/gitconfig')
     includes = subprocess.run(['git', 'config', '--global', '--get-all', 'include.path'],
                               capture_output=True, text=True, check=False).stdout.splitlines()
-    if shared not in includes:
+    if shared not in includes and gitconfig.resolve() != Path(shared).resolve():
         if gitconfig.exists():
             backup(gitconfig)
         legacy = str(ROOT / '.gitconfig')
