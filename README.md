@@ -91,6 +91,8 @@ Whatever only makes sense on one machine or at one job goes in `private/`, a pri
 
 `gitleaks` keeps the rest clean. `.githooks/pre-commit` stops a commit that adds a secret, a path into a home folder or one of those words outside `private/` (with `private/gitleaks.toml`, which adds the words to `.gitleaks.toml`, when it's there), and the `gitleaks` workflow scans the files with `.gitleaks.toml` on every push. A line that only looks like a secret says `gitleaks:allow`.
 
+The local hook also blocks commits when gitleaks is missing; install it with `brew install gitleaks` before retrying. GitHub's scan happens after a push and cannot prevent the initial upload of a secret.
+
 ## Global agent rules
 
 `agents/AGENTS.md` holds the rules every coding agent follows in any project: git and PR workflow, commit messages, keeping the Mac awake with `cafe-on`/`cafe-off`, scope, comments and security. opencode reads it as `~/.config/agents/AGENTS.md`, Claude Code as `~/.claude/CLAUDE.md` and Codex as `~/.codex/AGENTS.md`, all linked to the same file, so editing it changes all three. When a project's own instructions say something different, the project wins. Changes apply to new sessions.
