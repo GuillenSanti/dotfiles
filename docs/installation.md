@@ -14,7 +14,9 @@ The script resolves its own location, so it can be invoked from any working dire
 
 ## Personal settings
 
-Keep your identity and signing key in your own Git configuration. The shared Git file is added through `include.path` and contains preferences only. Local values for common preferences can override it when placed after the include in `~/.gitconfig`.
+Keep your identity and signing key in your own Git configuration. The shared Git file is added through `include.path` and contains preferences only. Local values for common preferences can override it when placed after the include in your global Git file.
+
+The installer backs up the global file that Git will write: `GIT_CONFIG_GLOBAL` when set, otherwise `~/.gitconfig`, or the existing `$XDG_CONFIG_HOME/git/config` (default `~/.config/git/config`) when there is no readable home file. An existing link to the shared file needs no extra include. `GIT_CONFIG_GLOBAL=/dev/null` disables shared global configuration; an empty override fails before personal files are changed. See [Git's global configuration rules](https://git-scm.com/docs/git-config#Documentation/git-config.txt---global).
 
 Keep shell overrides in `~/.zshrc.local`; they load after the shared defaults. Keep local host entries in `~/.hosts.local`. Existing files and resolving symlinks are preserved, so do not remove an old checkout until local overrides pointing into it have been copied to a permanent location.
 
