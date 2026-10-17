@@ -1,0 +1,19 @@
+{
+  "hooks": {
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "~/.tmux/attention.sh done" }] }
+    ],
+    "PermissionRequest": [
+      { "hooks": [{ "type": "command", "command": "~/.tmux/attention.sh ask" }] }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [{ "type": "command", "command": "~/.tmux/attention.sh ask" }]
+      }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "~/.tmux/attention.sh" }] }
+    ]
+  }
+}
