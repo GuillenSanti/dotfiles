@@ -1,3 +1,5 @@
 hosts.local
-.zshrc.localdeck/
+.zshrc.local
+deck/
 private/
+__pycache__/
