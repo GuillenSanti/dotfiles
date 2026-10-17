@@ -13,11 +13,13 @@ caffeinate's pid, its tmux window and since when. tmux/status/caffeinate.sh show
 """
 
 import datetime
+import fcntl
 import os
 import re
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 
 HOLDS = os.path.expanduser("~/.cache/cafe")
@@ -53,20 +55,37 @@ def alive_caffeinate(pid):
     return run("ps", "-o", "comm=", "-p", str(pid)).strip().endswith("caffeinate")
 
 
+def remove_hold(path):
+    try:
+        os.remove(path)
+    except FileNotFoundError:
+        pass
+
+
+def stop_caffeinate(pid):
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+
+
 def holds():
     """(agent pid, caffeinate pid, window, since) of the agents keeping the Mac awake; forgets the ones gone."""
     found = []
     for name in sorted(os.listdir(HOLDS)) if os.path.isdir(HOLDS) else []:
+        if not name.isdigit():
+            continue
         path = os.path.join(HOLDS, name)
         try:
             with open(path) as f:
                 pid, window, since = f.read().rstrip("\n").split("\t")
+            pid, since = int(pid), float(since)
         except (OSError, ValueError):
             pid = None
-        if pid and pid.isdigit() and alive_caffeinate(int(pid)):
-            found.append((int(name), int(pid), window, float(since)))
+        if pid and alive_caffeinate(pid):
+            found.append((int(name), pid, window, since))
         else:
-            os.remove(path)  # its agent ended, so did its caffeinate
+            remove_hold(path)  # another reader may already have removed it
     return found
 
 
@@ -102,9 +121,22 @@ def on():
     # Its own session, so the agent's shell ending doesn't take it down: it lasts until cafe-off or the agent ends
     p = subprocess.Popen([*CAFFEINATE, "-w", str(pid)], start_new_session=True,
                          stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    os.makedirs(HOLDS, exist_ok=True)
-    with open(os.path.join(HOLDS, str(pid)), "w") as f:
-        f.write(f"{p.pid}\t{window()}\t{time.time()}\n")
+    temporary = None
+    try:
+        os.makedirs(HOLDS, exist_ok=True)
+        # Keep unpublished files outside HOLDS, where status readers enumerate agents.
+        with tempfile.NamedTemporaryFile(mode="w", dir=os.path.dirname(HOLDS), prefix=".cafe-", delete=False) as f:
+            temporary = f.name
+            f.write(f"{p.pid}\t{window()}\t{time.time()}\n")
+        os.replace(temporary, os.path.join(HOLDS, str(pid)))
+    except BaseException:
+        if temporary:
+            remove_hold(temporary)
+        try:
+            p.terminate()
+        except ProcessLookupError:
+            pass
+        raise
     print("☕ ON for this agent, until its cafe-off or it ends")
 
 
@@ -112,9 +144,9 @@ def off():
     if "--all" in sys.argv[1:]:
         found = holds()
         for _, caffeinate, _, _ in found:
-            os.kill(caffeinate, signal.SIGTERM)
+            stop_caffeinate(caffeinate)
         for name in os.listdir(HOLDS) if os.path.isdir(HOLDS) else []:
-            os.remove(os.path.join(HOLDS, name))
+            remove_hold(os.path.join(HOLDS, name))
         run("launchctl", "remove", JOB)
         print(f"😴 OFF for everyone ({len(found)} {'agent' if len(found) == 1 else 'agents'} included)")
         return
@@ -125,8 +157,8 @@ def off():
         return
     for agent_pid, caffeinate, _, _ in holds():
         if agent_pid == pid:
-            os.kill(caffeinate, signal.SIGTERM)
-            os.remove(os.path.join(HOLDS, str(agent_pid)))
+            stop_caffeinate(caffeinate)
+            remove_hold(os.path.join(HOLDS, str(agent_pid)))
     print(f"😴 OFF for this agent ({others(pid)})")
 
 
@@ -146,9 +178,12 @@ def main():
     action = action or {"on": on, "off": off, "status": status}.get(sys.argv[1] if len(sys.argv) > 1 else "")
     if not action:
         sys.exit("Usage: cafe-on | cafe-off [--all] | cafe-status  (or cafe.py on|off|status)")
-    action()
-    if action is not status:
-        refresh()
+    os.makedirs(HOLDS, exist_ok=True)
+    with open(HOLDS + ".lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        action()
+        if action is not status:
+            refresh()
 
 
 if __name__ == "__main__":
