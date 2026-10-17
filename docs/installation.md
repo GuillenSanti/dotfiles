@@ -36,6 +36,8 @@ Hosts backups are separate, beside the system file as `/etc/hosts.dotfiles-<time
 
 Run `python3 -m unittest discover -s tests -v`. The tests use temporary checkouts and home directories, check repeated installation and preservation of settings, and mock network/system writes for hosts failures. They do not install packages or change your real home.
 
+The `validate` workflow runs these tests and shell syntax checks on both Ubuntu and macOS for pushes and pull requests. These quality checks are separate from the gitleaks secret scan.
+
 ## Installed paths
 
 | Source | Installed location |
