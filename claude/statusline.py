@@ -105,7 +105,8 @@ def ultracode_on(transcript):
 
 
 def pane_width():
-    """The tmux pane's width (Claude Code passes TMUX_PANE on), else the terminal's, else None."""
+    """The tmux pane's width (Claude Code passes TMUX_PANE on), else the terminal's, else the width of
+    Claude Code's own pty, else None."""
     pane = os.environ.get("TMUX_PANE")
     if pane:
         try:
@@ -119,7 +120,21 @@ def pane_width():
         with open("/dev/tty") as tty:
             return os.get_terminal_size(tty.fileno()).columns
     except OSError:
-        return None
+        pass
+    # A background session (kind bg) has no TMUX_PANE nor terminal of its own here, but Claude Code
+    # runs it in a pty sized to the pane showing it: ask that pty, Claude Code's (the parent's)
+    try:
+        tty = subprocess.run(["ps", "-o", "tty=", "-p", str(os.getppid())],
+                             capture_output=True, text=True, timeout=1).stdout.strip()
+        if tty and tty != "??":
+            fd = os.open(f"/dev/{tty}", os.O_RDONLY | os.O_NOCTTY)
+            try:
+                return os.get_terminal_size(fd).columns
+            finally:
+                os.close(fd)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return None
 
 
 def main():
