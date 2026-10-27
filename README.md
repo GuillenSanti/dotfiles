@@ -114,7 +114,6 @@ The local hook also blocks commits when gitleaks is missing; install it with `br
 - **Title bar**: the `tabs` style puts the tabs in the title bar, next to the window buttons, so there's a single bar and the window can still be dragged by it. No title and no proxy icon.
 - **Padding**: none above or below, and 4 points at the sides. `window-padding-balance` is off, so the space left over from the cell grid goes to the right and bottom edges instead of above the first line, which starts right under the tab bar.
 - **Look**: Dracula on a pure black background, JetBrains Mono, and the X-ray icon.
-- **Fullscreen**: Ghostty's own (`macos-non-native-fullscreen = padded-notch`), not macOS's: native fullscreen keeps the tabs titlebar's space at the top as an empty band. It hides the menu bar, keeps clear of the MacBook's notch, and has no animation; Ghostty tabs don't go fullscreen with it (tmux windows do the job).
 
 After editing, reload it with ⌘⇧,. A change of title bar style only applies to new windows.
 

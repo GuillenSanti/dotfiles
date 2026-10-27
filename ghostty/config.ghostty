@@ -3,7 +3,6 @@ macos-icon="xray"
 macos-titlebar-proxy-icon=hidden
 macos-titlebar-style = tabs
 macos-window-buttons = visible
-macos-non-native-fullscreen = padded-notch
 window-padding-x = 4
 window-padding-y = 0
 window-padding-balance = false
