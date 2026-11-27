@@ -48,6 +48,10 @@ These are my personal defaults. When a project's own instructions (AGENTS.md, CL
 ## Keeping the Mac awake
 - When I ask for a task to run with caffeinate, run `cafe-on` when you start it and `cafe-off` when you finish it or stop to wait for me. Each agent has its own, so turning yours off never lets the Mac sleep under another agent.
 
+## Usage limits
+- `~/.claude/rate-limits.json` holds how much of my Claude plan's 5-hour and weekly limits is used (`five_hour` and `seven_day`, each with `used_percentage` and `resets_at`, plus `updated_at`, in epoch seconds). Claude Code's status line writes it for the whole account while any interactive session is open, so check `updated_at` before trusting it.
+- When I ask you to stop at a usage percentage, read it before each big step and before starting subagents, and pass the limit on to them. Once it's reached, finish the step in progress, leave the work where it can be resumed and tell me.
+
 ## Testing & Quality
 - Propose a test that reproduces the bug before fixing it whenever possible.
 - Focus tests on user/product behavior rather than internal implementation details.

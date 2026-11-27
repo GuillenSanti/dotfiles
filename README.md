@@ -105,6 +105,7 @@ The local hook also blocks commits when gitleaks is missing; install it with `br
 
 - **Left**: the model, its effort level, a purple *ultracode* tag only while ultracode is on, and the 5-hour and weekly limits (green, yellow from 50%, red from 80%) with when they reset.
 - **Right**, at the pane's edge: how much of the context window the session uses, and its tokens. The width comes from tmux (`TMUX_PANE`), else from the terminal.
+- **For agents**: it also leaves the 5-hour and weekly limits in `~/.claude/rate-limits.json`, with when it wrote them, so an agent can stop a task at a usage percentage (see `agents/AGENTS.md`). The limits are the account's, so whichever session wrote last is right; one without limits leaves the file as it was.
 - **Ultracode** isn't in the JSON Claude Code passes to the status line, so it's read from the session's transcript: the last `ultra_effort_enter`/`ultra_effort_exit` marker Claude Code writes on each prompt, or `/effort`'s own "Ultracode on/off" output, found with `rg` (transcripts reach hundreds of MB). The `ultracode` keyword in a single prompt doesn't count: it's for that turn only.
 
 ## Ghostty
