@@ -16,6 +16,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import unicodedata
 
 
@@ -85,6 +86,20 @@ def limit(label, data, with_day):
     return text
 
 
+def save_limits(limits):
+    """Leaves the limits in ~/.claude/rate-limits.json so agents can stop at a given usage."""
+    if not limits:
+        return
+    path = os.path.expanduser("~/.claude/rate-limits.json")
+    tmp = f"{path}.{os.getpid()}"
+    try:
+        with open(tmp, "w") as f:
+            json.dump({**limits, "updated_at": int(time.time())}, f)
+        os.replace(tmp, path)
+    except OSError:
+        pass
+
+
 def tokens(n):
     return f"{n / 1_000_000:.1f}M".replace(".0M", "M") if n >= 1_000_000 else f"{round(n / 1000)}k"
 
@@ -152,6 +167,7 @@ def main():
     if ultracode_on(data.get("transcript_path")):
         left.append(f"{CHIP}{PURPLE} {ICON['ultracode']} ultracode {RESET}")
     limits = data.get("rate_limits") or {}
+    save_limits(limits)
     for text in (limit("5h", limits.get("five_hour"), False), limit("7d", limits.get("seven_day"), True)):
         if text:
             left.append(" " + text)  # a wider gap before each limit
